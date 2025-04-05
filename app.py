@@ -131,7 +131,7 @@ def build_interface():
                     text_input = gr.Textbox(label="テキストでメッセージを入力", placeholder="ここにメッセージを入力...", lines=2)
                 
                 with gr.Row():
-                    audio_input = gr.Audio(source="microphone", type="filepath", label="音声でメッセージを入力")
+                    audio_input = gr.Audio(label="音声でメッセージを入力", type="filepath", source="microphone")
                 
                 with gr.Row():
                     audio_output = gr.Audio(label="AIの応答（音声）", autoplay=True)
