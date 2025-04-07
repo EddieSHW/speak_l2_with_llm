@@ -1,6 +1,7 @@
 import requests
 import json
-from src.config.settings import OLLAMA_API_URL, MODEL_NAME
+import re
+from src.config.settings import OLLAMA_API_URL, MODEL_NAME, JAPANESE_TEACHER_SYSTEM_PROMPT
 
 class OllamaService:
     """Ollama APIと通信するためのサービスクラス"""
@@ -18,10 +19,50 @@ class OllamaService:
             return []
     
     @staticmethod
-    def get_chat_response(message, history, model=MODEL_NAME, temperature=0.7, max_tokens=2048):
+    def remove_markdown(text):
+        """テキストからMarkdown形式を除去する"""
+        if not text:
+            return text
+            
+        # *による強調表示を除去
+        text = re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
+        
+        # _による強調表示を除去
+        text = re.sub(r'_{1,3}([^_]+?)_{1,3}', r'\1', text)
+        
+        # `によるコード表示を除去
+        text = re.sub(r'`{1,3}([^`]+?)`{1,3}', r'\1', text)
+        
+        # #による見出しを通常テキストに変換
+        text = re.sub(r'^#{1,6}\s+(.+?)$', r'\1', text, flags=re.MULTILINE)
+        
+        # >による引用を通常テキストに変換
+        text = re.sub(r'^>\s+(.+?)$', r'\1', text, flags=re.MULTILINE)
+        
+        # - や * による箇条書きを通常テキストに変換
+        text = re.sub(r'^[\*\-\+]\s+(.+?)$', r'・\1', text, flags=re.MULTILINE)
+        
+        # 1. などの番号付きリストを通常テキストに変換
+        text = re.sub(r'^\d+\.\s+(.+?)$', r'\1', text, flags=re.MULTILINE)
+        
+        # [text](url)形式のリンクをテキストのみに変換
+        text = re.sub(r'\[([^\]]+?)\]\([^\)]+?\)', r'\1', text)
+        
+        return text
+    
+    @staticmethod
+    def get_chat_response(message, history, model=MODEL_NAME, temperature=0.7, max_tokens=2048, is_teacher_mode=True):
         """チャットの応答を取得する"""
         # チャット履歴を整形
         messages = []
+        
+        # システムプロンプトを追加（教師モードの場合）
+        if is_teacher_mode:
+            # Markdownを使わないことと絵文字を使わないことを強調する
+            system_prompt = JAPANESE_TEACHER_SYSTEM_PROMPT + "\n\n重要: 絶対に '*', '_', '`', '#', '>' のようなMarkdown記法や絵文字は使わないでください。通常のプレーンテキストで返答してください。"
+            messages.append({"role": "system", "content": system_prompt})
+        
+        # 過去の会話履歴を追加
         for human, ai in history:
             messages.append({"role": "user", "content": human})
             if ai:  # AIの応答がある場合
@@ -47,6 +88,11 @@ class OllamaService:
                 return f"エラー: {response.status_code} - {response.text}"
             
             response_data = response.json()
-            return response_data["message"]["content"]
+            content = response_data["message"]["content"]
+            
+            # Markdown形式を除去
+            content = OllamaService.remove_markdown(content)
+            
+            return content
         except Exception as e:
             return f"APIエラー: {str(e)}" 

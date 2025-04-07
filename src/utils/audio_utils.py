@@ -4,7 +4,7 @@ from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
 import numpy as np
-import wave
+#import wave
 import os
 
 class AudioUtils:
