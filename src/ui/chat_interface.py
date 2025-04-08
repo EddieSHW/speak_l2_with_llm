@@ -47,8 +47,8 @@ class ChatInterface:
     
     def build_interface(self):
         """Gradioインターフェースの構築"""
-        with gr.Blocks(title="日本語会話教師 - AIチャット") as ui:
-            gr.Markdown("# 日本語会話教師")
+        with gr.Blocks(title="Speak L2 with LLM") as ui:
+            gr.Markdown("# Speak L2 with LLM")
             gr.Markdown("日本語練習のためのAIアシスタントです。文法や表現の間違いを指摘し、自然な日本語での会話練習をサポートします。")
 
             with gr.Row():

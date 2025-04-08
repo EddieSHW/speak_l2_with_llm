@@ -1,4 +1,99 @@
-# 日本語会話教師 - AI 日本語練習アプリ
+# Speak L2 with LLM - AI Language Practice App
+
+An AI-powered conversation practice application for language learners using Ollama. This app identifies grammatical errors and unnatural expressions, helping you learn more natural language expressions.
+
+## Key Features
+
+- **Language Teacher Mode**: Identifies grammatical errors and unnatural expressions, suggesting better alternatives
+- **Voice Input**: Practice speaking through your microphone
+- **Voice Output**: Listen to AI responses via audio
+- **Text Input/Output**: Practice using keyboard input as well
+- **Completely Private**: Uses local Ollama, so data is never sent externally
+- **Customizable**: Adjust temperature parameters and token counts
+
+## Requirements
+
+- Python 3.9 or higher
+- [Ollama](https://ollama.ai/) installed and running
+- At least one model installed in Ollama (recommended: gemma3)
+- Proper microphone setup for voice recognition
+
+## Installation
+
+1. Clone the repository or download the files.
+2. Install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Copy `.env.example` to `.env` and modify settings as needed:
+
+```bash
+cp .env.example .env
+```
+
+## Usage
+
+1. Make sure Ollama is running.
+2. Start the application with:
+
+```bash
+python main.py
+```
+
+3. Access the application in your browser at `http://localhost:7860`.
+4. Practice conversations using text or voice input.
+   - Text input: Type text in the input box and press Enter
+   - Voice input: Click the microphone button to speak, then click stop for voice recognition
+5. The AI will identify grammar or expression errors and suggest more natural alternatives.
+
+## About Language Teacher Mode
+
+The default setting enables "Language Teacher Mode" which:
+
+1. Points out grammatical mistakes and unnatural expressions
+2. Suggests more natural expressions
+3. Continues the conversation naturally
+
+Disabling Teacher Mode switches to normal conversation mode without grammar checking.
+
+## Installing Ollama Models
+
+To install models suitable for language conversation:
+
+```bash
+ollama pull gemma3
+# or
+ollama pull llama3
+```
+
+## Troubleshooting
+
+- **"Cannot connect to Ollama server" error**: Ensure Ollama is running.
+- **Voice recognition errors**: Check that your microphone is properly set up.
+- **No audio output**: Check your browser's audio settings.
+- **Low recognition accuracy**: Speak clearly in a quiet environment.
+- **Slow responses**: Use a smaller model or ensure GPU acceleration is enabled.
+
+## Learning Tips
+
+- Practice a little each day for best results
+- Start with simple sentences
+- Practice the AI's correction suggestions out loud
+- Try different ways of expressing the same content
+
+## Disclaimer
+
+This application is a learning aid and not a replacement for professional language teachers. AI suggestions may contain errors, so consult professionals for important situations.
+
+## License
+
+MIT License
+
+---
+
+# Speak L2 with LLM - AI 日本語練習アプリ
 
 Ollama を使用して動作する日本語学習者向けの会話練習アプリケーションです。このアプリは、文法的な間違いや不自然な表現を指摘し、より自然な日本語を学ぶことができます。
 
@@ -93,9 +188,9 @@ MIT ライセンス
 
 ---
 
-# 日語會話教師 - AI 日語練習應用程式
+# Speak L2 with LLM - AI 日語練習應用程式
 
-這是一個面向日語學習者的會話練習應用程式，使用 Ollama 運行。此應用可以指出語法錯誤和不自然的表達，幫助您學習更自然的日語。
+這是一個日語學習者導向的會話練習應用程式，使用 Ollama 運行。此應用可以指出語法錯誤和不自然的表達，幫助您學習更自然的日語。
 
 ## 主要功能
 

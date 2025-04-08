@@ -20,10 +20,13 @@ class OllamaService:
     
     @staticmethod
     def remove_markdown(text):
-        """テキストからMarkdown形式を除去する"""
+        """テキストからMarkdown形式と<think>タグ内の内容を除去する"""
         if not text:
             return text
             
+        # <think>タグ内の内容を除去
+        text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        
         # *による強調表示を除去
         text = re.sub(r'\*{1,3}([^*]+?)\*{1,3}', r'\1', text)
         
