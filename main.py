@@ -10,7 +10,7 @@ def main():
     print("====================================")
     print("---------Speak L2 with LLM----------")
     print("====================================")
-    print("Applicattion Launching")
+    print("Application Launching")
     
     # チャットインターフェースのインスタンスを作成
     chat_interface = ChatInterface()
