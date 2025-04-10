@@ -8,9 +8,9 @@ def main():
     
     # タイトルを表示
     print("====================================")
-    print("日本語会話教師 - AI日本語練習アプリ")
+    print("---------Speak L2 with LLM----------")
     print("====================================")
-    print("アプリケーションを起動中...")
+    print("Applicattion Launching")
     
     # チャットインターフェースのインスタンスを作成
     chat_interface = ChatInterface()
