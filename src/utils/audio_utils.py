@@ -4,14 +4,13 @@ from gtts import gTTS
 from pydub import AudioSegment
 from pydub.playback import play
 import numpy as np
-#import wave
 import os
 
 class AudioUtils:
     """音声処理のためのユーティリティクラス"""
     
     @staticmethod
-    def transcribe_audio(audio_file):
+    def transcribe_audio(audio_file, language="ja"):
         """音声ファイルをテキストに変換する"""
         try:
             # 適切な形式に変換
@@ -21,7 +20,9 @@ class AudioUtils:
             recognizer = sr.Recognizer()
             with sr.AudioFile(file_to_use) as source:
                 audio_data = recognizer.record(source)
-                text = recognizer.recognize_google(audio_data, language="ja-JP")
+                # 言語コードを設定
+                lang_code = "ja-JP" if language == "ja" else "en-US"
+                text = recognizer.recognize_google(audio_data, language=lang_code)
                 
             # 一時ファイルを削除
             if converted_file and os.path.exists(converted_file):
@@ -32,13 +33,34 @@ class AudioUtils:
             return f"音声認識エラー: {str(e)}"
     
     @staticmethod
-    def text_to_speech(text):
+    def text_to_speech(text, language="ja"):
         """テキストを音声ファイルに変換する"""
         try:
-            tts = gTTS(text=text, lang='ja', slow=False)
+            # 言語コードを設定
+            lang_code = "ja" if language == "ja" else "en"
+            tts = gTTS(text=text, lang=lang_code, slow=False)
             temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
             temp_file.close()
             tts.save(temp_file.name)
+            
+            # 音声ファイルを読み込み
+            audio = AudioSegment.from_mp3(temp_file.name)
+            
+            # 再生速度を1.25倍に設定
+            audio = audio._spawn(audio.raw_data, overrides={
+                "frame_rate": int(audio.frame_rate * 1.25)
+            })
+            
+            # 一時ファイルを削除
+            os.remove(temp_file.name)
+            
+            # 新しい一時ファイルを作成
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".mp3")
+            temp_file.close()
+            
+            # 速度変更後の音声を保存
+            audio.export(temp_file.name, format="mp3")
+            
             return temp_file.name
         except Exception as e:
             print(f"音声合成エラー: {str(e)}")

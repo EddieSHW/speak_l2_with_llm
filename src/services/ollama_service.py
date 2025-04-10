@@ -1,7 +1,7 @@
 import requests
 import json
 import re
-from src.config.settings import OLLAMA_API_URL, MODEL_NAME, JAPANESE_TEACHER_SYSTEM_PROMPT
+from src.config.settings import OLLAMA_API_URL, MODEL_NAME, JAPANESE_TEACHER_SYSTEM_PROMPT, ENGLISH_TEACHER_SYSTEM_PROMPT
 
 class OllamaService:
     """Ollama APIと通信するためのサービスクラス"""
@@ -54,15 +54,15 @@ class OllamaService:
         return text
     
     @staticmethod
-    def get_chat_response(message, history, model=MODEL_NAME, temperature=0.7, max_tokens=2048, is_teacher_mode=True):
+    def get_chat_response(message, history, model=MODEL_NAME, temperature=0.7, max_tokens=2048, is_teacher_mode=True, language="ja"):
         """チャットの応答を取得する"""
         # チャット履歴を整形
         messages = []
         
         # システムプロンプトを追加（教師モードの場合）
         if is_teacher_mode:
-            # Markdownを使わないことと絵文字を使わないことを強調する
-            system_prompt = JAPANESE_TEACHER_SYSTEM_PROMPT + "\n\n重要: 絶対に '*', '_', '`', '#', '>' のようなMarkdown記法や絵文字は使わないでください。通常のプレーンテキストで返答してください。"
+            system_prompt = JAPANESE_TEACHER_SYSTEM_PROMPT if language == "ja" else ENGLISH_TEACHER_SYSTEM_PROMPT
+            system_prompt += "\n\n重要: 絶対に '*', '_', '`', '#', '>' のようなMarkdown記法や絵文字は使わないでください。通常のプレーンテキストで返答してください。"
             messages.append({"role": "system", "content": system_prompt})
         
         # 過去の会話履歴を追加

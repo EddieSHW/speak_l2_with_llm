@@ -11,35 +11,41 @@ class ChatInterface:
         self.audio_utils = AudioUtils()
         self.teacher_mode = True  # デフォルトで教師モードをオン
         
-    def chat(self, message, history, temperature, max_tokens, model, teacher_mode):
+    def chat(self, message, history, temperature, max_tokens, model, teacher_mode, language):
         """テキスト入力によるチャット処理"""
+        # 言語選択の値を言語コードに変換
+        lang_code = "ja" if language == "日本語" else "en"
+        
         # Ollamaからの応答を取得
         response = self.ollama_service.get_chat_response(
-            message, history, model, temperature, max_tokens, is_teacher_mode=teacher_mode
+            message, history, model, temperature, max_tokens, is_teacher_mode=teacher_mode, language=lang_code
         )
         
         # 音声ファイルの生成
-        audio_file = self.audio_utils.text_to_speech(response)
+        audio_file = self.audio_utils.text_to_speech(response, language=lang_code)
         
         # 履歴を更新して返す
         history.append((message, response))
         return history, history, audio_file
     
-    def voice_chat(self, audio_file, history, temperature, max_tokens, model, teacher_mode):
+    def voice_chat(self, audio_file, history, temperature, max_tokens, model, teacher_mode, language):
         """音声入力によるチャット処理"""
         if audio_file is None:
             return history, history, None
         
+        # 言語選択の値を言語コードに変換
+        lang_code = "ja" if language == "日本語" else "en"
+        
         # 音声をテキストに変換
-        text = self.audio_utils.transcribe_audio(audio_file)
+        text = self.audio_utils.transcribe_audio(audio_file, language=lang_code)
         
         # テキストから応答を生成
         response = self.ollama_service.get_chat_response(
-            text, history, model, temperature, max_tokens, is_teacher_mode=teacher_mode
+            text, history, model, temperature, max_tokens, is_teacher_mode=teacher_mode, language=lang_code
         )
         
         # 応答を音声に変換
-        audio_response = self.audio_utils.text_to_speech(response)
+        audio_response = self.audio_utils.text_to_speech(response, language=lang_code)
         
         # 履歴を更新
         history.append((text, response))
@@ -49,7 +55,7 @@ class ChatInterface:
         """Gradioインターフェースの構築"""
         with gr.Blocks(title="Speak L2 with LLM") as ui:
             gr.Markdown("# Speak L2 with LLM")
-            gr.Markdown("日本語練習のためのAIアシスタントです。文法や表現の間違いを指摘し、自然な日本語での会話練習をサポートします。")
+            gr.Markdown("言語練習のためのAIアシスタントです。文法や表現の間違いを指摘し、自然な会話練習をサポートします。")
 
             with gr.Row():
                 with gr.Column(scale=3):
@@ -57,7 +63,7 @@ class ChatInterface:
                     chatbot = gr.Chatbot(label="会話", height=500, render_markdown=False)
                     
                     with gr.Row():
-                        text_input = gr.Textbox(label="日本語でメッセージを入力", placeholder="ここに日本語でメッセージを入力...", lines=2)
+                        text_input = gr.Textbox(label="メッセージを入力", placeholder="ここにメッセージを入力...", lines=2)
                     
                     with gr.Row():
                         audio_input = gr.Audio(
@@ -74,8 +80,14 @@ class ChatInterface:
                         clear_btn = gr.Button("会話をクリア")
                     
                 with gr.Column(scale=1):
+                    language_dropdown = gr.Dropdown(
+                        choices=["日本語", "English"],
+                        value="日本語",
+                        label="言語選択"
+                    )
+                    
                     teacher_mode_checkbox = gr.Checkbox(
-                        label="日本語教師モード", 
+                        label="教師モード", 
                         value=True,
                         info="オンにすると、文法や表現の間違いを指摘します。オフにすると通常の会話モードになります。"
                     )
@@ -104,26 +116,17 @@ class ChatInterface:
                         step=16,
                         label="最大トークン数"
                     )
-                    
-                    gr.Markdown("### モデル情報")
-                    if available_models:
-                        gr.Markdown("インストール済みモデル:")
-                        for model in available_models:
-                            gr.Markdown(f"- {model}")
-                    else:
-                        gr.Markdown("警告: Ollamaサーバーに接続できないか、モデルが見つかりません。")
-                        gr.Markdown("Ollamaが実行中であることを確認してください。")
             
             # イベントハンドラの設定
             text_input.submit(
                 self.chat, 
-                [text_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox], 
+                [text_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown], 
                 [chatbot, chatbot, audio_output]
             ).then(lambda: "", None, [text_input])
             
             audio_input.change(
                 self.voice_chat, 
-                [audio_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox], 
+                [audio_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown], 
                 [chatbot, chatbot, audio_output]
             )
             
@@ -131,6 +134,6 @@ class ChatInterface:
             
             # フッター
             gr.Markdown("---")
-            gr.Markdown("このアプリケーションは日本語学習者向けに設計されています。ローカルのOllamaを使用しているため、データはあなたのコンピュータから外部に送信されません。")
+            gr.Markdown("このアプリケーションは言語学習者向けに設計されています。ローカルのOllamaを使用しているため、データはあなたのコンピュータから外部に送信されません。")
         
         return ui
