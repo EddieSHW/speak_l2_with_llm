@@ -33,7 +33,7 @@ class AudioUtils:
             return f"音声認識エラー: {str(e)}"
     
     @staticmethod
-    def text_to_speech(text, language="ja"):
+    def text_to_speech(text, language="ja", speed=1.25):
         """テキストを音声ファイルに変換する"""
         try:
             # 言語コードを設定
@@ -46,9 +46,9 @@ class AudioUtils:
             # 音声ファイルを読み込み
             audio = AudioSegment.from_mp3(temp_file.name)
             
-            # 再生速度を1.25倍に設定
+            # 再生速度を調整
             audio = audio._spawn(audio.raw_data, overrides={
-                "frame_rate": int(audio.frame_rate * 1.25)
+                "frame_rate": int(audio.frame_rate * speed)
             })
             
             # 一時ファイルを削除

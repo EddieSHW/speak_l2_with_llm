@@ -11,7 +11,7 @@ class ChatInterface:
         self.audio_utils = AudioUtils()
         self.teacher_mode = True  # デフォルトで教師モードをオン
         
-    def chat(self, message, history, temperature, max_tokens, model, teacher_mode, language):
+    def chat(self, message, history, temperature, max_tokens, model, teacher_mode, language, speech_speed):
         """テキスト入力によるチャット処理"""
         # 言語選択の値を言語コードに変換
         lang_code = "ja" if language == "日本語" else "en"
@@ -22,13 +22,13 @@ class ChatInterface:
         )
         
         # 音声ファイルの生成
-        audio_file = self.audio_utils.text_to_speech(response, language=lang_code)
+        audio_file = self.audio_utils.text_to_speech(response, language=lang_code, speed=speech_speed)
         
         # 履歴を更新して返す
         history.append((message, response))
         return history, history, audio_file
     
-    def voice_chat(self, audio_file, history, temperature, max_tokens, model, teacher_mode, language):
+    def voice_chat(self, audio_file, history, temperature, max_tokens, model, teacher_mode, language, speech_speed):
         """音声入力によるチャット処理"""
         if audio_file is None:
             return history, history, None
@@ -45,7 +45,7 @@ class ChatInterface:
         )
         
         # 応答を音声に変換
-        audio_response = self.audio_utils.text_to_speech(response, language=lang_code)
+        audio_response = self.audio_utils.text_to_speech(response, language=lang_code, speed=speech_speed)
         
         # 履歴を更新
         history.append((text, response))
@@ -63,7 +63,8 @@ class ChatInterface:
                     chatbot = gr.Chatbot(label="会話", height=500, render_markdown=False)
                     
                     with gr.Row():
-                        text_input = gr.Textbox(label="メッセージを入力", placeholder="ここにメッセージを入力...", lines=2)
+                        text_input = gr.Textbox(label="メッセージを入力", placeholder="ここにメッセージを入力...", lines=2, scale=4)
+                        submit_btn = gr.Button("送信", scale=1)
                     
                     with gr.Row():
                         audio_input = gr.Audio(
@@ -116,17 +117,31 @@ class ChatInterface:
                         step=16,
                         label="最大トークン数"
                     )
+                    
+                    speech_speed = gr.Slider(
+                        minimum=0.5,
+                        maximum=2.0,
+                        value=1.25,
+                        step=0.05,
+                        label="音声スピード"
+                    )
             
             # イベントハンドラの設定
             text_input.submit(
                 self.chat, 
-                [text_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown], 
+                [text_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown, speech_speed], 
+                [chatbot, chatbot, audio_output]
+            ).then(lambda: "", None, [text_input])
+            
+            submit_btn.click(
+                self.chat, 
+                [text_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown, speech_speed], 
                 [chatbot, chatbot, audio_output]
             ).then(lambda: "", None, [text_input])
             
             audio_input.change(
                 self.voice_chat, 
-                [audio_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown], 
+                [audio_input, chatbot, temperature, max_tokens, model_dropdown, teacher_mode_checkbox, language_dropdown, speech_speed], 
                 [chatbot, chatbot, audio_output]
             )
             
