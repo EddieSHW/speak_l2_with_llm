@@ -1,16 +1,140 @@
 import os
+import logging
+from typing import Optional
 from dotenv import load_dotenv
+from pydantic import BaseModel, Field, validator, ValidationError
+from urllib.parse import urlparse
 
 # 環境変数の読み込み
 load_dotenv()
 
-# Ollama API設定
-OLLAMA_API_URL = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
-MODEL_NAME = os.getenv("MODEL_NAME", "gemma3")
+# ロガーの設定
+logger = logging.getLogger(__name__)
 
-# モデル設定のデフォルト値
-DEFAULT_TEMPERATURE = float(os.getenv("DEFAULT_TEMPERATURE", "0.7"))
-DEFAULT_MAX_TOKENS = int(os.getenv("DEFAULT_MAX_TOKENS", "2048"))
+class AppSettings(BaseModel):
+    """アプリケーション設定を管理するクラス"""
+    
+    # Ollama API設定
+    ollama_api_url: str = Field(
+        default="http://localhost:11434",
+        description="Ollama API のURL"
+    )
+    model_name: str = Field(
+        default="gemma3",
+        description="使用するモデル名"
+    )
+    
+    # モデル設定
+    default_temperature: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=2.0,
+        description="デフォルトのtemperature値"
+    )
+    default_max_tokens: int = Field(
+        default=2048,
+        ge=1,
+        le=8192,
+        description="デフォルトの最大トークン数"
+    )
+    
+    # タイムアウト設定
+    api_timeout: int = Field(
+        default=30,
+        ge=1,
+        le=300,
+        description="API リクエストのタイムアウト（秒）"
+    )
+    
+    # リトライ設定
+    max_retries: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="API リクエストの最大リトライ回数"
+    )
+    
+    # ログレベル
+    log_level: str = Field(
+        default="INFO",
+        description="ログレベル"
+    )
+    
+    @validator('ollama_api_url')
+    def validate_url(cls, v):
+        """URLの形式を検証"""
+        try:
+            result = urlparse(v)
+            if not all([result.scheme, result.netloc]):
+                raise ValueError("無効なURL形式です")
+            if result.scheme not in ['http', 'https']:
+                raise ValueError("URLはhttpまたはhttpsである必要があります")
+            return v
+        except Exception as e:
+            raise ValueError(f"URL検証エラー: {str(e)}")
+    
+    @validator('log_level')
+    def validate_log_level(cls, v):
+        """ログレベルを検証"""
+        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        if v.upper() not in valid_levels:
+            raise ValueError(f"ログレベルは {valid_levels} のいずれかである必要があります")
+        return v.upper()
+    
+    class Config:
+        env_prefix = ""
+        case_sensitive = False
+
+def load_settings() -> AppSettings:
+    """環境変数から設定を読み込み、バリデーションを実行"""
+    try:
+        settings = AppSettings(
+            ollama_api_url=os.getenv("OLLAMA_API_URL", "http://localhost:11434"),
+            model_name=os.getenv("MODEL_NAME", "gemma3"),
+            default_temperature=float(os.getenv("DEFAULT_TEMPERATURE", "0.7")),
+            default_max_tokens=int(os.getenv("DEFAULT_MAX_TOKENS", "2048")),
+            api_timeout=int(os.getenv("API_TIMEOUT", "30")),
+            max_retries=int(os.getenv("MAX_RETRIES", "3")),
+            log_level=os.getenv("LOG_LEVEL", "INFO")
+        )
+        
+        # ログレベルを設定
+        logging.basicConfig(
+            level=getattr(logging, settings.log_level),
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
+        
+        logger.info("設定が正常に読み込まれました")
+        return settings
+        
+    except ValidationError as e:
+        logger.error(f"設定の検証に失敗しました: {e}")
+        raise
+    except ValueError as e:
+        logger.error(f"設定値の変換に失敗しました: {e}")
+        raise
+
+# グローバル設定インスタンス
+try:
+    settings = load_settings()
+    
+    # 後方互換性のために既存の変数名を維持
+    OLLAMA_API_URL = settings.ollama_api_url
+    MODEL_NAME = settings.model_name
+    DEFAULT_TEMPERATURE = settings.default_temperature
+    DEFAULT_MAX_TOKENS = settings.default_max_tokens
+    API_TIMEOUT = settings.api_timeout
+    MAX_RETRIES = settings.max_retries
+    
+except Exception as e:
+    logger.error(f"設定の初期化に失敗しました: {e}")
+    # フォールバック設定
+    OLLAMA_API_URL = "http://localhost:11434"
+    MODEL_NAME = "gemma3"
+    DEFAULT_TEMPERATURE = 0.7
+    DEFAULT_MAX_TOKENS = 2048
+    API_TIMEOUT = 30
+    MAX_RETRIES = 3
 
 # 日本語教師のシステムプロンプト
 JAPANESE_TEACHER_SYSTEM_PROMPT = """

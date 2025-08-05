@@ -4,4 +4,5 @@ gradio==3.50.2
 gtts==2.3.2
 SpeechRecognition==3.10.0
 pydub==0.25.1
-pydantic<2.0.0 
+pydantic>=2.0.0
+tenacity==8.2.3 

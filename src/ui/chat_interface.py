@@ -93,8 +93,12 @@ class ChatInterface:
                         info="オンにすると、文法や表現の間違いを指摘します。オフにすると通常の会話モードになります。"
                     )
                     
-                    available_models = self.ollama_service.get_available_models()
-                    default_model = MODEL_NAME if MODEL_NAME in available_models else (available_models[0] if available_models else MODEL_NAME)
+                    try:
+                        available_models = self.ollama_service.get_available_models()
+                        default_model = MODEL_NAME if MODEL_NAME in available_models else (available_models[0] if available_models else MODEL_NAME)
+                    except Exception as e:
+                        available_models = [MODEL_NAME]
+                        default_model = MODEL_NAME
                     
                     model_dropdown = gr.Dropdown(
                         choices=available_models if available_models else [MODEL_NAME],
